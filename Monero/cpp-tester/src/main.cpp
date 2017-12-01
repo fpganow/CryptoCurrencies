@@ -147,11 +147,21 @@ void aesb_single_round(const uint8_t *in, uint8_t *out, uint8_t *expandedKey)
 
     int roundStart;
     round(fwd_rnd,  b1, b0, kp);
-    int roundEnd;
+    int fwd_rnd_start;
+//#define fwd_rnd(y,x,k,c)  (s(y,c) = (k)[c] ^ four_tables(x,t_use(f,n),fwd_var,rf1,c))
+    fwd_rnd(b1, b0, kp, 0);
+    t_use(f,n);
+    int fwd_rnd_end;
 
+    int bval_0 = bval(fwd_var(b0, 0, 0), rfl(0, 0));
+    int bval_1 = bval(fwd_var(b0, 1, 0), rfl(1, 0));
+    int fwd_var_0 = fwd_var(b0, 0, 0);
+    int fwd_var_1 = fwd_var(b0, 1, 0);
     int state_outStart;
     state_out(out, b1);
     int state_outEnd;
+
+//    d_4(uint32_t, t_dec_2(f,n), sb_data, u0, u1, u2, u3);
 }
 
 void print_line()
