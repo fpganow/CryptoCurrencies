@@ -2,7 +2,8 @@
 #include <iostream>
 #include <stdio.h>
 
-#include <emmintrin.h>
+//#include <emmintrin.h>
+#include <wmmintrin.h>
 #include <inttypes.h>
 
 
@@ -153,8 +154,8 @@ void aesb_single_round(const uint8_t *in, uint8_t *out, uint8_t *expandedKey)
     t_use(f,n);
     int fwd_rnd_end;
 
-    int bval_0 = bval(fwd_var(b0, 0, 0), rfl(0, 0));
-    int bval_1 = bval(fwd_var(b0, 1, 0), rfl(1, 0));
+    int bval_0 = bval(fwd_var(b0, 0, 0), rf1(0, 0));
+    int bval_1 = bval(fwd_var(b0, 1, 0), rf1(1, 0));
     int fwd_var_0 = fwd_var(b0, 0, 0);
     int fwd_var_1 = fwd_var(b0, 1, 0);
     int state_outStart;
@@ -189,22 +190,25 @@ int main(int arc, char **argv)
     __m128i _a;
     __m128i _c;
 
-/* [40369] */ /* Before */ _a  = _mm_setr_epi32(0x5578c70, 0xd73c691a, 0x9e1fc3ea, 0xf953c967);
-/* [40369] */ /* Before */ _c  = _mm_setr_epi32(0x9afd2f9d, 0x3176ace6, 0x3c37503c, 0x9364b83e);
+//_a = _mm_setr_epi32(0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c);
+//_c = _mm_setr_epi32(0x3243f6a8, 0x885a308d, 0x313198a2, 0xe0370734);
+/* [1621] */ /* Before */ _a  = _mm_setr_epi32(0xab09cac1, 0x09cfb622, 0xb5d5f13c, 0xda3ed5e2);
+/* [1621] */ /* Before */ _c  = _mm_setr_epi32(0x4fa33a00, 0x1f15431d, 0x09ad8239, 0x669eb8ea);
     dump_128("_a", _a);
     dump_128("_c", _c);
 
-    aesb_single_round( (uint8_t *) &_c,
-                       (uint8_t *) &_c,
-                       (uint8_t *) &_a);
+    _c = _mm_aesenc_si128(_c, _a);
+    //aesb_single_round( (uint8_t *) &_c,
+    //                   (uint8_t *) &_c,
+    //                   (uint8_t *) &_a);
 
     __m128i exp_a;
     __m128i exp_c;
-/* [40369] */ /* After */ exp_a  = _mm_setr_epi32(0x5578c70, 0xd73c691a, 0x9e1fc3ea, 0xf953c967);
-/* [40369] */ /* After */ exp_c  = _mm_setr_epi32(0x4fc88222, 0x25b43c13, 0x1562cb00, 0xd4a2f2f4);
+///* [1621] */ /* After */ exp_a  = _mm_setr_epi32(0xab09cac1, 0x09cfb622, 0xb5d5f13c, 0xda3ed5e2);
+/* [1621] */ /* After */ exp_c  = _mm_setr_epi32(0xe7140a8f, 0xf5f9adcb, 0x7ee4e566, 0x9388a334);
     std::cout << "\n\nResults:\n\n";
-    dump_128("exp_a", exp_a);
-    dump_128("   _a", _a);
+//    dump_128("exp_a", exp_a);
+//    dump_128("   _a", _a);
     std::cout << "\n";
     dump_128("exp_c", exp_c);
     dump_128("   _c", _c);

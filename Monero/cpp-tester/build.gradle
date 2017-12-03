@@ -1,6 +1,24 @@
 apply plugin: 'cpp'
 
 model {
+
+    binaries {
+        all {
+            // Define a preprocessor macro for every binary
+            cppCompiler.define "NDEBUG"
+
+            // Define toolchain-specific compiler and linker options
+            if (toolChain in Gcc) {
+                cppCompiler.args "-msse4.1", "-maes"
+                //linker.args "-Xlinker", "-S"
+            }
+            if (toolChain in VisualCpp) {
+                cppCompiler.args "/Zi"
+                linker.args "/DEBUG"
+            }
+        }
+    }
+
     components {
         main(NativeExecutableSpec) {
             sources {
