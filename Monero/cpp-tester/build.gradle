@@ -8,7 +8,12 @@ model {
             cppCompiler.define "NDEBUG"
 
             // Define toolchain-specific compiler and linker options
+            if (toolChain in Clang) {
+                println 'Clang'
+                cppCompiler.args "-msse4.1", "-maes"
+            }
             if (toolChain in Gcc) {
+                println 'GCC'
                 cppCompiler.args "-msse4.1", "-maes"
                 //linker.args "-Xlinker", "-S"
             }
