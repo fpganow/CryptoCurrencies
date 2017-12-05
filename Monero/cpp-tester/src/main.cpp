@@ -31,8 +31,8 @@
 #define so(y,x,c) word_out(y, c, s(x,c))
 #define state_in(y,x) si(y,x,0); si(y,x,1); si(y,x,2); si(y,x,3)
 #define state_out(y,x)  so(y,x,0); so(y,x,1); so(y,x,2); so(y,x,3)
-#define round(rm,y,x,k) rm(y,x,k,0);
-//#define round(rm,y,x,k) rm(y,x,k,0); rm(y,x,k,1); rm(y,x,k,2); rm(y,x,k,3)
+//#define round(rm,y,x,k) rm(y,x,k,0);
+#define round(rm,y,x,k) rm(y,x,k,0); rm(y,x,k,1); rm(y,x,k,2); rm(y,x,k,3)
 #define to_byte(x) ((x) & 0xff)
 #define bval(x,n) to_byte((x) >> (8 * (n)))
 
@@ -42,8 +42,8 @@
         : r == 2 ? ( c == 0 ? s(x,2) : c == 1 ? s(x,3) : c == 2 ? s(x,0) : s(x,1))\
         :          ( c == 0 ? s(x,3) : c == 1 ? s(x,0) : c == 2 ? s(x,1) : s(x,2)))
 
-//#define fwd_rnd(y,x,k,c)  (s(y,c) = (k)[c] ^ four_tables(x,t_use(f,n),fwd_var,rf1,c))
-#define fwd_rnd(y,x,k,c)  four_tables(x,t_use(f,n),fwd_var,rf1,c)
+#define fwd_rnd(y,x,k,c)  (s(y,c) = (k)[c] ^ four_tables(x,t_use(f,n),fwd_var,rf1,c))
+//#define fwd_rnd(y,x,k,c)  four_tables(x,t_use(f,n),fwd_var,rf1,c)
 
 #define sb_data(w) {\
       w(0x63), w(0x7c), w(0x77), w(0x7b), w(0xf2), w(0x6b), w(0x6f), w(0xc5),\
@@ -117,11 +117,11 @@
 
 #define d_4(t,n,b,e,f,g,h) ALIGN const t n[4][256] = { b(e), b(f), b(g), b(h) }
 
-#define four_tables(x,tab,vf,rf,c) \
-      (tab[0][bval(vf(x,0,c),rf(0,c))]
-
-
 //#define four_tables(x,tab,vf,rf,c) \
+//      (tab[0][bval(vf(x,0,c),rf(0,c))]
+
+
+#define four_tables(x,tab,vf,rf,c) \
       (tab[0][bval(vf(x,0,c),rf(0,c))] \
           ^ tab[1][bval(vf(x,1,c),rf(1,c))] \
           ^ tab[2][bval(vf(x,2,c),rf(2,c))] \

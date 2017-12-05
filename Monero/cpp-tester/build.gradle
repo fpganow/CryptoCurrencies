@@ -30,7 +30,7 @@ model {
                 cpp {
                     source {
                         srcDir "src"
-                        getFilter().exclude("*.swp")
+                        getFilter().exclude("*.swp", "*.py")
                     }
                 }
             }
