@@ -173,7 +173,7 @@ void print_line()
 void dump_128_u8(const char *varName, uint8_t *value)
 {
     const uint8_t *kp_8 = (uint8_t *)&value;
-    //std::cout << "ADDR_3 = " << std::hex << (uint32_t*)value << "\n";
+    std::cout << varName << ":= ";
     for(int i=0; i<16; i++)
     {
         std::cout << std::hex
@@ -399,10 +399,19 @@ static void Cipher2(state_t* state, uint8_t* RoundKey)
 {
     uint8_t round = 0;
 
+    dump_128_u8("START", (uint8_t*)state);
+
     ShiftRows(state);
+    dump_128_u8("SHIFT_ROWS", (uint8_t*)state);
+
     SubBytes(state);
+    dump_128_u8("SUB_BYTES", (uint8_t*)state);
+
     MixColumns(state);
+    dump_128_u8("MIX_COLUMNS", (uint8_t*)state);
+
     XorWithIv((uint8_t*)state, RoundKey);
+    dump_128_u8("ADD_KEY", (uint8_t*)state);
 }
 __m128i calculate_c(__m128i state, __m128i key2)
 {
