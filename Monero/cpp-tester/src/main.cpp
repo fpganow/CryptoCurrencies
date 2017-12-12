@@ -433,8 +433,29 @@ __m128i calculate_c(__m128i state, __m128i key2)
     return result;
 }
 
+void test_file()
+{
+    printf("Opening file for writing\n");
+    FILE *fout = fopen("test.log", "wb");
+    if(fout)
+    {
+        uint32_t size_of_data = 0x3;
+        fwrite(&size_of_data, 4, 1, fout);
+
+        uint8_t * act_data = new uint8_t[size_of_data];
+        for(int i=0; i<size_of_data; i++)
+        {
+        }
+        fclose(fout);
+    }
+}
+
+
 int main(int arc, char **argv)
 {
+    test_file();
+    return 0;
+
     print_line();
     std::cout << "Monero preprocessor  ---\n";
     std::cout << "\n\n";
