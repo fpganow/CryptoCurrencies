@@ -130,6 +130,14 @@
 
 d_4(uint32_t, t_dec(f,n), sb_data, u0, u1, u2, u3);
 
+#if defined(__INTEL_COMPILER)
+#define ASM __asm__
+#elif !defined(_MSC_VER)
+#define ASM __asm__
+#else
+#define ASM __asm
+#endif
+
 void print128_num2(const char *varName, int index, __m128i var) 
 {
     uint32_t *v32val = (uint32_t*) &var;
@@ -432,6 +440,89 @@ __m128i calculate_c(__m128i state, __m128i key2)
 
     return result;
 }
+
+#if defined(_MSC_VER)
+    #if !defined(_WIN64)
+        #define __mul() lo = mul128(c[0], b[0], &hi);
+    #else
+        #define __mul() lo = _umul128(c[0], b[0], &hi);
+    #endif
+#else
+    #if defined(__x86_64__)
+        #define __mul() ASM("mulq %3\n\t" : "=d"(hi), "=a"(lo) : "%a" (c[0]), "rm" (b[0]) : "cc");
+    #else
+        #define __mul() lo = mul128(c[0], b[0], &hi);
+    #endif
+#endif
+
+#define MEMORY         (1 << 21) // 2MB scratchpad
+#define ITER           (1 << 20)
+#define AES_BLOCK_SIZE  16
+#define AES_KEY_SIZE    32
+#define INIT_SIZE_BLK   8
+#define INIT_SIZE_BYTE (INIT_SIZE_BLK * AES_BLOCK_SIZE)
+
+#define TOTALBLOCKS (MEMORY / AES_BLOCK_SIZE)
+
+#define U64(x) ((uint64_t *) (x))
+#define R128(x) ((__m128i *) (x))
+
+#define state_index(x) (((*((uint64_t *)x) >> 4) & (TOTALBLOCKS - 1)) << 4)
+
+#define pre_aes() \
+  j = state_index(a); \
+  _c = _mm_load_si128(R128(&hp_state[j])); \
+  _a = _mm_load_si128(R128(a)); \
+
+/*
+ * An SSE-optimized implementation of the second half of CryptoNight step 3.
+ * After using AES to mix a scratchpad value into _c (done by the caller),
+ * this macro xors it with _b and stores the result back to the same index (j) that it
+ * loaded the scratchpad value from.  It then performs a second random memory
+ * read/write from the scratchpad, but this time mixes the values using a 64
+ * bit multiply.
+ * This code is based upon an optimized implementation by dga.
+ */
+
+#define post_aes() \
+  _mm_store_si128(R128(c), _c); \
+  _b = _mm_xor_si128(_b, _c); \
+  _mm_store_si128(R128(&hp_state[j]), _b); \
+  j = state_index(c); \
+  p = U64(&hp_state[j]); \
+  b[0] = p[0]; b[1] = p[1]; \
+  __mul(); \
+  a[0] += hi; a[1] += lo; \
+  p = U64(&hp_state[j]); \
+  p[0] = a[0];  p[1] = a[1]; \
+  a[0] ^= b[0]; a[1] ^= b[1]; \
+  _b = _c; \
+
+
+#define RDATA_ALIGN16 __attribute__ ((aligned(16)))
+#define THREADV __thread
+THREADV uint8_t *hp_state = NULL;
+
+void pre_and_post()
+{
+    RDATA_ALIGN16 uint64_t a[2];
+    RDATA_ALIGN16 uint64_t b[2];
+    RDATA_ALIGN16 uint64_t c[2];
+
+    uint64_t hi, lo;
+    size_t i, j;
+    __m128i _a, _b, _c;
+    uint64_t *p = NULL;
+
+    // Values in:
+    // a
+    // hp_state
+
+    pre_aes();
+
+    post_aes();
+}
+
 
 int main(int arc, char **argv)
 {
