@@ -553,6 +553,10 @@ int load_step_3(const char   *file_name,
         fread( &b[0], 8, 1, fin );
         fread( &b[1], 8, 1, fin );
 
+        printf("a[0] = 0x%llx\n", a[0]);
+        printf("a[1] = 0x%llx\n", a[1]);
+        printf("b[0] = 0x%llx\n", b[0]);
+        printf("b[1] = 0x%llx\n", b[1]);
         fread( &state_size, 4, 1, fin );
 
         *hp_state_in = new uint8_t[state_size];
@@ -561,6 +565,11 @@ int load_step_3(const char   *file_name,
         fread( *hp_state_in, 1, state_size, fin );
         fread( &state_size, 4, 1, fin );
         fread( *hp_state_out, 1, state_size, fin );
+
+        printf("hp_state_in[0] = 0x%x\n", (*hp_state_in)[0] );
+        printf("hp_state_in[%d] = 0x%x\n", state_size-1, (*hp_state_in)[(state_size-1)] );
+        printf("hp_state_out[0] = 0x%x\n", (*hp_state_out)[0] );
+        printf("hp_state_out[%d] = 0x%x\n", state_size-1, (*hp_state_out)[(state_size-1)] );
     }
     return 0;
 }
