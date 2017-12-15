@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include <stdint.h>
 #include <stdio.h>
 
 #include <wmmintrin.h>
@@ -137,6 +138,19 @@ d_4(uint32_t, t_dec(f,n), sb_data, u0, u1, u2, u3);
 #else
 #define ASM __asm
 #endif
+
+void print128_num(const char *varName, int index, __m128i var) 
+{
+    int64_t *v64val = (int64_t*) &var;
+    printf("%s[%d] = %.16llx %.16llx\n", varName, index, v64val[1], v64val[0]);
+    uint32_t *v32val = (uint32_t*) &var;
+    printf("\/* [%d] *\/ %s = _mm_setr_epi32(0x%08x, 0x%08x, 0x%08x, 0x%08x);\n", index,
+                varName,
+                v32val[0],
+                v32val[1],
+                v32val[2],
+                v32val[3]);
+}
 
 void print128_num2(const char *varName, int index, __m128i var) 
 {
@@ -523,9 +537,78 @@ void pre_and_post()
     post_aes();
 }
 
+int load_step_3(const char   *file_name,
+                   uint64_t  *a,
+                   uint64_t  *b,
+                   uint32_t  &state_size,
+                   uint8_t   **hp_state_in,
+                   uint8_t   **hp_state_out)
+{
+    FILE *fin = fopen(file_name, "rb");
+    if(fin)
+    {
+        printf("File opened ok\n");
+        fread( &a[0], 8, 1, fin );
+        fread( &a[1], 8, 1, fin );
+        fread( &b[0], 8, 1, fin );
+        fread( &b[1], 8, 1, fin );
+
+        fread( &state_size, 4, 1, fin );
+
+        *hp_state_in = new uint8_t[state_size];
+        *hp_state_out = new uint8_t[state_size];
+
+        fread( *hp_state_in, 1, state_size, fin );
+        fread( &state_size, 4, 1, fin );
+        fread( *hp_state_out, 1, state_size, fin );
+    }
+    return 0;
+}
+
 
 int main(int arc, char **argv)
 {
+    const char file_name[] = "log_file.8.bin";
+    RDATA_ALIGN16 uint64_t a[2];
+    RDATA_ALIGN16 uint64_t b[2];
+    uint32_t state_size;
+    uint8_t **hp_state_in;
+    uint8_t **hp_state_out;
+    hp_state_in = new uint8_t*;
+    hp_state_out = new uint8_t*;
+    load_step_3(file_name, a, b, state_size, hp_state_in, hp_state_out);
+
+    // CryptoNight Step 3
+    size_t j;
+    uint64_t hi, lo;
+    uint64_t *p = NULL;
+    RDATA_ALIGN16 uint64_t c[2];
+    __m128i _a;
+    __m128i _c;
+    __m128i _b = _mm_load_si128(R128(b));
+    uint8_t *hp_state = (uint8_t*)(*hp_state_in);
+    for (int i=0; i < ITER / 2; i++)
+    {
+        pre_aes();
+        _c = _mm_aesenc_si128(_c, _a);
+        post_aes();
+    }
+
+    // Compare values from run
+    bool allMatch = true;
+    for(int i=0; i< MEMORY; i++)
+    {
+        if(hp_state[i] != (*hp_state_out)[i])
+            allMatch = false;
+    }
+
+    if(allMatch == true)
+        printf("SUCCESS!!!\n");
+    else
+        printf("FAILURE!!!\n");
+
+    return 0;
+
     print_line();
     std::cout << "Monero preprocessor  ---\n";
     std::cout << "\n\n";
