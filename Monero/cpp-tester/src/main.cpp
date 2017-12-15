@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include <stdint.h>
 #include <stdio.h>
 
 #include <wmmintrin.h>
@@ -451,9 +452,58 @@ void test_file()
 }
 
 
+int load_step_3(const char   *file_name,
+                   uint64_t  *a,
+                   uint64_t  *b,
+                   uint8_t   *hp_state_in,
+                   uint8_t   *hp_state_out)
+{
+    FILE *fin = fopen(file_name, "rb");
+    if(fin)
+    {
+        printf("File opened ok\n");
+        fread( &a[0], 8, 1, fin );
+        fread( &a[1], 8, 1, fin );
+        fread( &b[0], 8, 1, fin );
+        fread( &b[1], 8, 1, fin );
+
+        uint32_t size;
+        fread( &size, 4, 1, fin );
+
+        hp_state_in = new uint8_t[size];
+        fread( hp_state_in, 1, size, fin );
+        printf("READ: size =  %d (0x%llx)\n", size, size );
+
+        fread( &size, 4, 1, fin );
+        hp_state_out = new uint8_t[size];
+        printf("READ: size =  %d (0x%llx)\n", size, size );
+        fread( hp_state_out, 1, size, fin );
+
+        printf("READ: a[0] = %llx\n", a[0] );
+        printf("READ: a[1] = %llx\n", a[1] );
+        printf("READ: b[0] = %llx\n", b[0] );
+        printf("READ: b[1] = %llx\n", b[1] );
+        printf("READ: size =  %d (0x%llx)\n", size, size );
+        printf("READ: hp_state_in[0] = %d (0x%x)\n", hp_state_in[0], hp_state_in[0]);
+        printf("READ: hp_state_in[%d] = %d (0x%x)\n", (size-1), hp_state_in[(size-1)], hp_state_in[(size-1)]);
+        printf("READ: hp_state_out[0] = %d (0x%x)\n", hp_state_out[0], hp_state_out[0]);
+        printf("READ: hp_state_out[%d] = %d (0x%x)\n", (size-1), hp_state_out[(size-1)], hp_state_out[(size-1)]);
+        
+    }
+    return 0;
+}
+
+
 int main(int arc, char **argv)
 {
-    test_file();
+    const char file_name[] = "log_file.57.bin";
+    uint64_t a[2];
+    uint64_t b[2];
+    uint8_t *hp_state_in;
+    uint8_t *hp_state_out;
+
+    load_step_3(file_name, a, b, hp_state_in, hp_state_out);
+//    test_file();
     return 0;
 
     print_line();
