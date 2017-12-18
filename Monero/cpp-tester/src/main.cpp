@@ -139,6 +139,11 @@ d_4(uint32_t, t_dec(f,n), sb_data, u0, u1, u2, u3);
 #define ASM __asm
 #endif
 
+void print64_num(const char *varName, int index, uint64_t var)
+{
+    printf("%s (uint64_t)[%d] = 0x%.16llx\n", varName, index, var);
+}
+
 void print128_num(const char *varName, int index, __m128i var) 
 {
     int64_t *v64val = (int64_t*) &var;
@@ -152,17 +157,17 @@ void print128_num(const char *varName, int index, __m128i var)
                 v32val[3]);
 }
 
-void print128_num2(const char *varName, int index, __m128i var) 
-{
-    uint32_t *v32val = (uint32_t*) &var;
-    printf("%s (uint32_t)[%d] = %8x %8x %8x %8x\n",
-                                        varName,
-                                        index,
-                                        v32val[3],
-                                        v32val[2],
-                                        v32val[1],
-                                        v32val[0]);
-}
+//void print128_num2(const char *varName, int index, __m128i var) 
+//{
+//    uint32_t *v32val = (uint32_t*) &var;
+//    printf("%s (uint32_t)[%d] = %8x %8x %8x %8x\n",
+//                                        varName,
+//                                        index,
+//                                        v32val[3],
+//                                        v32val[2],
+//                                        v32val[1],
+//                                        v32val[0]);
+//}
 
 void print128_num3(const char *varName, int index, uint32_t *v32val) 
 {
@@ -574,7 +579,6 @@ int load_step_3(const char   *file_name,
     return 0;
 }
 
-
 int main(int arc, char **argv)
 {
     const char file_name[] = "log_file.8.bin";
@@ -601,6 +605,11 @@ int main(int arc, char **argv)
         pre_aes();
         _c = _mm_aesenc_si128(_c, _a);
         post_aes();
+        print64_num("b[0]", i, b[0] );
+        print64_num("b[1]", i, b[1] );
+        print64_num("hi", i, hi );
+        print64_num("lo", i, lo );
+        break;
     }
 
     // Compare values from run
