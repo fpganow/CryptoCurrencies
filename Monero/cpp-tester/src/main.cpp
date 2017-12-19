@@ -7,8 +7,7 @@
 
 #include <wmmintrin.h>
 #include <inttypes.h>
-
-
+#include <queue>
 
 #define TABLE_ALIGN     32
 #define WPOLY           0x011b
@@ -33,7 +32,6 @@
 #define so(y,x,c) word_out(y, c, s(x,c))
 #define state_in(y,x) si(y,x,0); si(y,x,1); si(y,x,2); si(y,x,3)
 #define state_out(y,x)  so(y,x,0); so(y,x,1); so(y,x,2); so(y,x,3)
-//#define round(rm,y,x,k) rm(y,x,k,0);
 #define round(rm,y,x,k) rm(y,x,k,0); rm(y,x,k,1); rm(y,x,k,2); rm(y,x,k,3)
 #define to_byte(x) ((x) & 0xff)
 #define bval(x,n) to_byte((x) >> (8 * (n)))
@@ -45,7 +43,6 @@
         :          ( c == 0 ? s(x,3) : c == 1 ? s(x,0) : c == 2 ? s(x,1) : s(x,2)))
 
 #define fwd_rnd(y,x,k,c)  (s(y,c) = (k)[c] ^ four_tables(x,t_use(f,n),fwd_var,rf1,c))
-//#define fwd_rnd(y,x,k,c)  four_tables(x,t_use(f,n),fwd_var,rf1,c)
 
 #define sb_data(w) {\
       w(0x63), w(0x7c), w(0x77), w(0x7b), w(0xf2), w(0x6b), w(0x6f), w(0xc5),\
@@ -119,10 +116,6 @@
 
 #define d_4(t,n,b,e,f,g,h) ALIGN const t n[4][256] = { b(e), b(f), b(g), b(h) }
 
-//#define four_tables(x,tab,vf,rf,c) \
-//      (tab[0][bval(vf(x,0,c),rf(0,c))]
-
-
 #define four_tables(x,tab,vf,rf,c) \
       (tab[0][bval(vf(x,0,c),rf(0,c))] \
           ^ tab[1][bval(vf(x,1,c),rf(1,c))] \
@@ -138,6 +131,67 @@ d_4(uint32_t, t_dec(f,n), sb_data, u0, u1, u2, u3);
 #else
 #define ASM __asm
 #endif
+
+struct big64
+{
+    uint32_t v[2]; /* num = v[0] + (v[1] << 32)  - "little endian" */
+};
+typedef struct big64 big64_t;
+
+struct big128
+{
+    uint32_t v[4];
+};
+typedef struct big128 big128_t;
+
+big128_t big128_mul(big64_t x, big64_t y)
+{
+    /* x * y = (z2 << 64) + (z1 << 32) + z0
+     * where z2 = x1 * y1
+     *       z1 = x0 * y1 + x1 * y0
+     *       z0 = x0 * y0
+     */
+    
+    uint64_t x0 =   x.v[0], x1 = x.v[1], y0 = y.v[0], y1 = y.v[1];
+    uint64_t z0 = x0 * y0;
+    uint64_t z1a = x1 * y0;
+    uint64_t z1b = x0 * y1;
+    uint64_t z2 = x1 * y1;
+
+    uint32_t z0l = z0 & UINT32_MAX;
+    uint32_t z0h = z0 >> 32u;
+    
+    uint64_t z1al = z1a & UINT32_MAX;
+    uint64_t z1bl = z1b & UINT32_MAX;
+    uint64_t z1l = z1al + z1bl + z0h;
+    
+    uint64_t z1h = (z1a >> 32u) + (z1b >> 32u) + (z1l >> 32u);
+    z2 += z1h;
+
+    big128_t p = {{ z0l, z1l & UINT32_MAX, z2 & UINT32_MAX, z2 >> 32u }};
+    return p;
+}
+
+void mult64to128(uint64_t u, uint64_t v, uint64_t& h, uint64_t &l)
+{
+    uint64_t u1 = (u & 0xffffffff);
+    uint64_t v1 = (v & 0xffffffff);
+    uint64_t t = (u1 * v1);
+    uint64_t w3 = (t & 0xffffffff);
+    uint64_t k = (t >> 32);
+    
+    u >>= 32;
+    t = (u * v1) + k;
+    k = (t & 0xffffffff);
+    uint64_t w1 = (t >> 32);
+    
+    v >>= 32;
+    t = (u1 * v) + k;
+    k = (t >> 32);
+    
+    h = (u * v) + w1 + k;
+    l = (t << 32) + w3;
+}
 
 void print64_num(const char *varName, int index, uint64_t var)
 {
@@ -155,29 +209,6 @@ void print128_num(const char *varName, int index, __m128i var)
                 v32val[1],
                 v32val[2],
                 v32val[3]);
-}
-
-//void print128_num2(const char *varName, int index, __m128i var) 
-//{
-//    uint32_t *v32val = (uint32_t*) &var;
-//    printf("%s (uint32_t)[%d] = %8x %8x %8x %8x\n",
-//                                        varName,
-//                                        index,
-//                                        v32val[3],
-//                                        v32val[2],
-//                                        v32val[1],
-//                                        v32val[0]);
-//}
-
-void print128_num3(const char *varName, int index, uint32_t *v32val) 
-{
-    printf("%s (uint32_t)[%d] = %8x %8x %8x %8x\n",
-                                        varName,
-                                        index,
-                                        v32val[3],
-                                        v32val[2],
-                                        v32val[1],
-                                        v32val[0]);
 }
 
 void aesb_single_round(const uint8_t *in, uint8_t *out, uint8_t *expandedKey)
@@ -426,19 +457,19 @@ static void Cipher2(state_t* state, uint8_t* RoundKey)
 {
     uint8_t round = 0;
 
-    dump_128_u8("START", (uint8_t*)state);
+    //dump_128_u8("START", (uint8_t*)state);
 
     ShiftRows(state);
-    dump_128_u8("SHIFT_ROWS", (uint8_t*)state);
+    //dump_128_u8("SHIFT_ROWS", (uint8_t*)state);
 
     SubBytes(state);
-    dump_128_u8("SUB_BYTES", (uint8_t*)state);
+    //dump_128_u8("SUB_BYTES", (uint8_t*)state);
 
     MixColumns(state);
-    dump_128_u8("MIX_COLUMNS", (uint8_t*)state);
+    //dump_128_u8("MIX_COLUMNS", (uint8_t*)state);
 
     XorWithIv((uint8_t*)state, RoundKey);
-    dump_128_u8("ADD_KEY", (uint8_t*)state);
+    //dump_128_u8("ADD_KEY", (uint8_t*)state);
 }
 __m128i calculate_c(__m128i state, __m128i key2)
 {
@@ -542,91 +573,8 @@ void pre_and_post()
     post_aes();
 }
 
-int load_step_3(const char   *file_name,
-                   uint64_t  *a,
-                   uint64_t  *b,
-                   uint32_t  &state_size,
-                   uint8_t   **hp_state_in,
-                   uint8_t   **hp_state_out)
+bool test_cryptonight_step_3_single_round()
 {
-    FILE *fin = fopen(file_name, "rb");
-    if(fin)
-    {
-        printf("File opened ok\n");
-        fread( &a[0], 8, 1, fin );
-        fread( &a[1], 8, 1, fin );
-        fread( &b[0], 8, 1, fin );
-        fread( &b[1], 8, 1, fin );
-
-        printf("a[0] = 0x%llx\n", a[0]);
-        printf("a[1] = 0x%llx\n", a[1]);
-        printf("b[0] = 0x%llx\n", b[0]);
-        printf("b[1] = 0x%llx\n", b[1]);
-        fread( &state_size, 4, 1, fin );
-
-        *hp_state_in = new uint8_t[state_size];
-        *hp_state_out = new uint8_t[state_size];
-
-        fread( *hp_state_in, 1, state_size, fin );
-        fread( &state_size, 4, 1, fin );
-        fread( *hp_state_out, 1, state_size, fin );
-
-        printf("hp_state_in[0] = 0x%x\n", (*hp_state_in)[0] );
-        printf("hp_state_in[%d] = 0x%x\n", state_size-1, (*hp_state_in)[(state_size-1)] );
-        printf("hp_state_out[0] = 0x%x\n", (*hp_state_out)[0] );
-        printf("hp_state_out[%d] = 0x%x\n", state_size-1, (*hp_state_out)[(state_size-1)] );
-    }
-    return 0;
-}
-
-int main(int arc, char **argv)
-{
-    const char file_name[] = "log_file.8.bin";
-    RDATA_ALIGN16 uint64_t a[2];
-    RDATA_ALIGN16 uint64_t b[2];
-    uint32_t state_size;
-    uint8_t **hp_state_in;
-    uint8_t **hp_state_out;
-    hp_state_in = new uint8_t*;
-    hp_state_out = new uint8_t*;
-    load_step_3(file_name, a, b, state_size, hp_state_in, hp_state_out);
-
-    // CryptoNight Step 3
-    size_t j;
-    uint64_t hi, lo;
-    uint64_t *p = NULL;
-    RDATA_ALIGN16 uint64_t c[2];
-    __m128i _a;
-    __m128i _c;
-    __m128i _b = _mm_load_si128(R128(b));
-    uint8_t *hp_state = (uint8_t*)(*hp_state_in);
-    for (int i=0; i < ITER / 2; i++)
-    {
-        pre_aes();
-        _c = _mm_aesenc_si128(_c, _a);
-        post_aes();
-        print64_num("b[0]", i, b[0] );
-        print64_num("b[1]", i, b[1] );
-        print64_num("hi", i, hi );
-        print64_num("lo", i, lo );
-        break;
-    }
-
-    // Compare values from run
-    bool allMatch = true;
-    for(int i=0; i< MEMORY; i++)
-    {
-        if(hp_state[i] != (*hp_state_out)[i])
-            allMatch = false;
-    }
-
-    if(allMatch == true)
-        printf("SUCCESS!!!\n");
-    else
-        printf("FAILURE!!!\n");
-
-    return 0;
-
     print_line();
     std::cout << "Monero preprocessor  ---\n";
     std::cout << "\n\n";
@@ -663,6 +611,114 @@ int main(int arc, char **argv)
 
     std::cout << "\n\n";
     print_line();
+
+    return false;
+}
+
+bool load_data_for_step_3(const char   *file_name,
+                         uint64_t     *a,
+                         uint64_t     *b,
+                         uint32_t     &state_size,
+                         uint8_t     **hp_state_in,
+                         uint8_t     **hp_state_out)
+{
+    FILE *fin = fopen(file_name, "rb");
+    if(fin)
+    {
+        printf("File opened ok\n");
+        fread( &a[0], 8, 1, fin );
+        fread( &a[1], 8, 1, fin );
+        fread( &b[0], 8, 1, fin );
+        fread( &b[1], 8, 1, fin );
+
+        fread( &state_size, 4, 1, fin );
+
+        *hp_state_in = new uint8_t[state_size];
+        *hp_state_out = new uint8_t[state_size];
+
+        fread( *hp_state_in, 1, state_size, fin );
+        fread( &state_size, 4, 1, fin );
+        fread( *hp_state_out, 1, state_size, fin );
+
+        // Dump some of the data to validate
+        //printf("a[0] = 0x%llx\n", a[0]);
+        //printf("a[1] = 0x%llx\n", a[1]);
+        //printf("b[0] = 0x%llx\n", b[0]);
+        //printf("b[1] = 0x%llx\n", b[1]);
+        //printf("hp_state_in[0] = 0x%x\n", (*hp_state_in)[0] );
+        //printf("hp_state_in[%d] = 0x%x\n", state_size-1, (*hp_state_in)[(state_size-1)] );
+        //printf("hp_state_out[0] = 0x%x\n", (*hp_state_out)[0] );
+        //printf("hp_state_out[%d] = 0x%x\n", state_size-1, (*hp_state_out)[(state_size-1)] );
+        return true;
+    }
+    return false;
+}
+
+bool test_cryptonight_step_3(const char *file_name)
+{
+    RDATA_ALIGN16 uint64_t a[2];
+    RDATA_ALIGN16 uint64_t b[2];
+    uint32_t state_size;
+
+    // todo: convert to one liners
+    uint8_t **hp_state_in;
+    uint8_t **hp_state_out;
+    hp_state_in = new uint8_t*;
+    hp_state_out = new uint8_t*;
+
+    load_data_for_step_3(file_name, a, b, state_size, hp_state_in, hp_state_out);
+
+    // CryptoNight Step 3
+    size_t j;
+    uint64_t hi, lo;
+    uint64_t *p = NULL;
+    RDATA_ALIGN16 uint64_t c[2];
+    __m128i _a;
+    __m128i _c;
+    __m128i _b = _mm_load_si128(R128(b));
+    uint8_t *hp_state = (uint8_t*)(*hp_state_in);
+    for (int i=0; i < ITER / 2; i++)
+    {
+        pre_aes();
+        _c = _mm_aesenc_si128(_c, _a);
+        post_aes();
+    }
+
+    // print some random results to compare visually with
+    // LabVIEW version
+    std::queue<int> indexes;
+    //indexes.push(0);
+    while( ! indexes.empty() ) { 
+        int i = indexes.front();
+        indexes.pop();
+        printf("hp_state[%d] = %x\n", i, hp_state[i] );
+    }
+
+    // Compare values from run
+    bool allMatch = true;
+    for(int i=0; i< MEMORY; i++)
+    {
+        if(hp_state[i] != (*hp_state_out)[i])
+            allMatch = false;
+    }
+
+    if(allMatch == true)
+        printf("SUCCESS!!!\n");
+    else
+        printf("FAILURE!!!\n");
+
+    return false;
+}
+
+int main(int arc, char **argv)
+{
+    test_cryptonight_step_3_single_round();
+
+    const char file_name[] = "log_file.8.bin";
+    test_cryptonight_step_3(file_name);
+
+    return 0;
+
 
     return 0;
 }
