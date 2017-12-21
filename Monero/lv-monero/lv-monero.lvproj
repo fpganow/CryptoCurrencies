@@ -22,6 +22,7 @@
 				<Item Name="Shift Rows.vi" Type="VI" URL="../CryptoNight/Host-Implementation/Shift Rows.vi"/>
 				<Item Name="xtime.vi" Type="VI" URL="../CryptoNight/Host-Implementation/xtime.vi"/>
 				<Item Name="state_index.vi" Type="VI" URL="../CryptoNight/Host-Implementation/state_index.vi"/>
+				<Item Name="state_index2.vi" Type="VI" URL="../CryptoNight/Host-Implementation/state_index2.vi"/>
 				<Item Name="U8Array-toU32Array_128bit.vi" Type="VI" URL="../CryptoNight/Host-Implementation/U8Array-toU32Array_128bit.vi"/>
 				<Item Name="U64Array-toU32Array_128bit.vi" Type="VI" URL="../CryptoNight/Host-Implementation/U64Array-toU32Array_128bit.vi"/>
 				<Item Name="U32Array-toU8Array_128bit.vi" Type="VI" URL="../CryptoNight/Host-Implementation/U32Array-toU8Array_128bit.vi"/>
