@@ -36,6 +36,8 @@
 			<Item Name="CryptoNight-ParseLine.vi" Type="VI" URL="../CryptoNight/CryptoNight-ParseLine.vi"/>
 		</Item>
 		<Item Name="DataFiles" Type="Folder">
+			<Item Name="Step-3-Data-Type.ctl" Type="VI" URL="../CryptoNight/Tests/DataFiles/Step-3-Data-Type.ctl"/>
+			<Item Name="U8Array-to-U64Array.vi" Type="VI" URL="../CryptoNight/Tests/DataFiles/U8Array-to-U64Array.vi"/>
 			<Item Name="Load-CryptoNight-Step3.vi" Type="VI" URL="../DataFiles/Load-CryptoNight-Step3.vi"/>
 		</Item>
 		<Item Name="Tests" Type="Folder">
@@ -911,6 +913,7 @@ set_property IOSTANDARD LVCMOS25 [get_ports {Si570Clkn}]
 				</Item>
 			</Item>
 		</Item>
+		<Item Name="Save-to-hp_state.vi" Type="VI" URL="../CryptoNight/Host-Implementation/Save-to-hp_state.vi"/>
 		<Item Name="Dependencies" Type="Dependencies">
 			<Item Name="user.lib" Type="Folder">
 				<Item Name="Convert EOLs (String Array)__ogtk.vi" Type="VI" URL="/&lt;userlib&gt;/_OpenG.lib/string/string.llb/Convert EOLs (String Array)__ogtk.vi"/>
