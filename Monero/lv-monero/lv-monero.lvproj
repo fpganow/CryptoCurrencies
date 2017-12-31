@@ -16,7 +16,6 @@
 				<Item Name="CryptoNight-SingleRound-Top-Level.vi" Type="VI" URL="../CryptoNight/Host-Implementation/CryptoNight-SingleRound-Top-Level.vi"/>
 				<Item Name="Add Roundkey.vi" Type="VI" URL="../CryptoNight/Host-Implementation/Add Roundkey.vi"/>
 				<Item Name="AxB.vi" Type="VI" URL="../CryptoNight/Host-Implementation/AxB.vi"/>
-				<Item Name="Convert-U32-U8-Array.vi" Type="VI" URL="../CryptoNight/Host-Implementation/Convert-U32-U8-Array.vi"/>
 				<Item Name="Create S box Number.vi" Type="VI" URL="../CryptoNight/Host-Implementation/Create S box Number.vi"/>
 				<Item Name="MixColumn.vi" Type="VI" URL="../CryptoNight/Host-Implementation/MixColumn.vi"/>
 				<Item Name="Shift Rows.vi" Type="VI" URL="../CryptoNight/Host-Implementation/Shift Rows.vi"/>
@@ -25,15 +24,15 @@
 				<Item Name="state_index2.vi" Type="VI" URL="../CryptoNight/Host-Implementation/state_index2.vi"/>
 				<Item Name="U8Array-toU32Array_128bit.vi" Type="VI" URL="../CryptoNight/Host-Implementation/U8Array-toU32Array_128bit.vi"/>
 				<Item Name="U64Array-toU32Array_128bit.vi" Type="VI" URL="../CryptoNight/Host-Implementation/U64Array-toU32Array_128bit.vi"/>
+				<Item Name="Convert-U32-U8-Array.vi" Type="VI" URL="../CryptoNight/Host-Implementation/Convert-U32-U8-Array.vi"/>
 				<Item Name="U32Array-toU8Array_128bit.vi" Type="VI" URL="../CryptoNight/Host-Implementation/U32Array-toU8Array_128bit.vi"/>
 				<Item Name="Select-U64-hp_state.vi" Type="VI" URL="../CryptoNight/Host-Implementation/Select-U64-hp_state.vi"/>
 				<Item Name="U64-to-U8Array.vi" Type="VI" URL="../CryptoNight/Host-Implementation/U64-to-U8Array.vi"/>
 				<Item Name="Mul-U64.vi" Type="VI" URL="../CryptoNight/Host-Implementation/Mul-U64.vi"/>
 				<Item Name="CryptoNight-Step-3.vi" Type="VI" URL="../CryptoNight/Host-Implementation/CryptoNight-Step-3.vi"/>
 			</Item>
-			<Item Name="Fpga-Interface" Type="Folder">
-				<Item Name="Call-CryptoNight-Step-3-Fpga.vi" Type="VI" URL="../CryptoNight/Fpga-Interface/Call-CryptoNight-Step-3-Fpga.vi"/>
-			</Item>
+			<Item Name="Fpga-Interface" Type="Folder"/>
+			<Item Name="Call-CryptoNight-Step-3-Fpga.vi" Type="VI" URL="../CryptoNight/Fpga-Interface/Call-CryptoNight-Step-3-Fpga.vi"/>
 			<Item Name="CryptoNight-ParseLine.vi" Type="VI" URL="../CryptoNight/CryptoNight-ParseLine.vi"/>
 		</Item>
 		<Item Name="DataFiles" Type="Folder">
