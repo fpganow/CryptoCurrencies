@@ -7,10 +7,6 @@ LabVIEW FPGA Framework for Implementing Cryptomining Algorithms
     * See (https://github.com/JohnStratoudakis/CryptoCurrencies/blob/master/Monero/lv-monero/CryptoNight/FPGA/Fpga-Aes-Single-Round.vi)
 
 # Up Next
-  * Research CryptoNot
-  * Clean up and refactoring of code
-
-# HELP ME!
-Okay, so I am taking a look at this project again and I see that there is now something called "CryptoNote", which is effectively "CryptoNight V7"
-
-I have been searching for the whitepaper or specification, can anybody point me to it?
+  * Research CryptoNote
+   * See https://monero.stackexchange.com/questions/7923/what-exactly-has-been-changed-in-pow-algorithms-in-the-v7-fork
+  * Clean up and refactore existing code
